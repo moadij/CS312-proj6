@@ -96,7 +96,6 @@ class TSPSolver:
 			while time.time() - start_time < time_allowance:
 				# for each city as the starting node
 				for index_loop in range(len(cities)):
-					print("Starting with city {}".format(index_loop))
 					city = cities[index_loop]
 					city_path = []
 					city_path.append(city)
@@ -132,16 +131,13 @@ class TSPSolver:
 
 				self.lowest_cost = float("inf")
 				for key, solution in solution_dict.items():
-					print(key, solution["cost"])
 					if solution["cost"] < self.lowest_cost:
 						self.lowest_cost = solution["cost"]
 						lowest = solution
 
-				print("BSSF is {}".format(lowest["soln"].cost))
 				return lowest
 
 		except Exception as e:
-			print(e)
 			traceback.print_exc()
 			raise (e)
 
