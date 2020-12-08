@@ -155,8 +155,57 @@ class TSPSolver:
 
 		sorted_x = sorted(cost.items(), key=lambda kv: kv[1])
 		return sorted_x
-	
-	
+	'''
+		crossover -
+			make 3 functions where we can check partial paths, 
+			decide where we cross over in the array, 
+			and then another to check if that generated paths that work
+	'''
+
+	def crossover(self, cities_length, city1, city2, cities):
+		city_cost1 = city1[0]
+		city_cost2 = city2[0]
+
+		city1 = city1[1:]
+		city2 = city2[1:]
+		cut_length = cities_length/2
+		new_city1 = []
+		new_city2 = []
+		for i in cities_length:
+			if i < cut_length:
+				new_city1.append(city2[i])
+				new_city2.append(city1[i])
+			else:
+				new_city1.append(city1[i])
+				new_city2.append(city2[i])
+		route1 = []
+		route2 = []
+		for i in cities_length:
+			route1.append(cities[new_city1[i]])
+			route2.append(cities[new_city2[i]])
+
+
+		valid1 = TSPSolution(route1)
+		valid2 = TSPSolution(route2)
+
+		if valid1.cost() < math.inf and valid1.cost() < city_cost1:
+			result_city1 = new_city1
+			city1.insert(0, valid1.cost())
+		else:
+			# might need deep copy
+			result_city1 = city1
+			city1.insert(0, city_cost1)
+
+		if valid2.cost() < math.inf and valid2.cost() < city_cost2:
+			result_city2 = new_city2
+			city1.insert(0, valid2.cost())
+		else:
+			# might need deep copy
+			result_city2 = city2
+			city2.insert(0, city_cost2)
+		return [result_city1, result_city2]
+
+
 	''' <summary>
 		This is the entry point for the branch-and-bound algorithm that you will implement
 		</summary>
