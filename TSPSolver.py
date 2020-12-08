@@ -1,4 +1,5 @@
 #!/usr/bin/python3
+import self
 
 from which_pyqt import PYQT_VER
 if PYQT_VER == 'PYQT5':
@@ -234,21 +235,145 @@ class TSPSolver:
 		random_paths.sort()
 
 		return random_paths[-1], random_paths[-2]
-	
 
-	def mutate(self):
 
-	''' <summary>
-		This is the entry point for the algorithm you'll write for your group project.
-		</summary>
-		<returns>results dictionary for GUI that contains three ints: cost of best solution,
-		time spent to find best solution, total number of solutions found during search, the
-		best solution found.  You may use the other three field however you like.
-		algorithm</returns>
-	'''
+	def mutate(self, cities_length, city_path, cities):
+		i = 1
+		constant_mutation = 0.05
+		path_copy = copy.deepcopy(city_path)
+
+		while i < cities_length-1:
+			city_index1 = city_path[i]
+			city_index2 = city_path[i+1]
+
+			random_mut1 = random.uniform(0.0,1.0)
+			if random_mut1 < constant_mutation:
+				path_copy[i] = city_index2
+				path_copy[i+1] = city_index1
+			i += 1
+		i =1
+		route = []
+		while i < cities_length:
+			route.append(cities[i])
+		valid1 = TSPSolution(route)
+		if valid1.cost() < math.inf and valid1.cost() < city_path[0]:
+			return path_copy
+		else:
+			return city_path
+
+
+
+
+
 
 	def fancy( self,time_allowance=60.0 ):
-		pass
+		populationSet = self.initializePopulation()
+
+	def initializePopulation(self):
+		numPathsToGenerate = (len(self._scenario.getCities()))**2
+		populationSet = [] # initialize an empty array
+		populationSet = self.greedyPathGenerator(populationSet)
+		return self.randomPathGenerator(populationSet, numPathsToGenerate)
+
+	def greedyPathGenerator(self, populationSet):
+		cities = self._scenario.getCities()
+		ncities = len(cities)
+		# This loop adds n to the time complexity of the interior
+		# complexity, where n is ncities
+		for city in cities:
+			route = [city]
+			visited = [city._index]
+
+			# Time complexity: O(mn^2) where m is the number of total
+			# cities and n is the number of visited cities
+			# Space complexity: O(n)
+			while len(route) < ncities:
+
+				# Get the next minimum cost
+				# Time complexity: O(mn) where m is the number of total
+				# cities and n is the number of visited cities
+				# Space complexity: O(1)
+				minIndex = self.greedyFindMin(route[-1], cities, visited)
+				if minIndex is None:
+					break
+
+				# As per the Python language description,
+				# This has time and space complexity of O(1)
+				route.append(cities[minIndex])
+				visited.append(minIndex)
+
+			if len(route) < ncities:
+				continue
+
+			# Use the TSPSolution functionality to add up
+			# the costs. This is necessary to add the cost
+			# of the last city back to the first.
+			# Time Complexity: O(n) where n is the number of cities
+			# Space Complexity: O(1)
+			completePath = TSPSolution(route)
+
+			if completePath.cost < np.inf:
+					# Found a valid route
+				populationElement = self.tspSolutionToArray(completePath)
+				populationSet.append(populationElement)
+
+		return populationSet
+
+	def randomPathGenerator(self, populationSet, desiredNumPaths):
+		cities = self._scenario.getCities()
+		ncities = len(cities)
+
+		while len(populationSet) < desiredNumPaths:
+			# create a random permutation
+			perm = np.random.permutation( ncities )
+			route = []
+			# Now build the route using the random permutation
+			for i in range( ncities ):
+				route.append( cities[ perm[i] ] )
+			completePath = TSPSolution(route)
+			if completePath.cost < np.inf:\
+				# Found a valid route
+				populationElement = self.tspSolutionToArray(completePath)
+				populationSet.append(populationElement)
+
+		return populationSet
+
+	# See interior for broken-down description:
+	# Time complexity: O(mn) where m is the number of total
+	# cities and n is the number of visited cities
+	# Space complexity: O(1)
+	def greedyFindMin(self, city, cities, visited):
+		minCost = np.inf
+		minIndex = None
+
+		# Loop through the cities and find the min value
+		# Time complexity: O(mn) where m is the number of total
+		# cities and n is the number of visited cities
+		# Space complexity: O(1) Because we're just updating the
+		# variables declared above
+		for i in range(len(cities)):
+			if i in visited:
+				continue
+			else:
+				# Time/Space: O(1) from the City class
+				if city.costTo(cities[i]) < minCost:
+					minCost = city.costTo(cities[i])
+					minIndex = i
+
+		return minIndex
+
+	# Time/space complexity: O(n) where n is the number of cities
+	def tspSolutionToArray(self, tspSolution):
+		results = []
+
+		# The first element of the array is the cost of the solution
+		results.append(tspSolution.cost)
+
+		# The remaining elements are the city ids in order
+		for city in tspSolution.route:
+			results.append(city._index)
+
+		return results
 		
 
 
