@@ -173,7 +173,7 @@ class TSPSolver:
 		cut_length = cities_length/2
 		new_city1 = []
 		new_city2 = []
-		for i in cities_length:
+		for i in range(cities_length):
 			if i < cut_length:
 				new_city1.append(city2[i])
 				new_city2.append(city1[i])
@@ -182,7 +182,7 @@ class TSPSolver:
 				new_city2.append(city2[i])
 		route1 = []
 		route2 = []
-		for i in cities_length:
+		for i in range(cities_length):
 			route1.append(cities[new_city1[i]])
 			route2.append(cities[new_city2[i]])
 
@@ -190,17 +190,17 @@ class TSPSolver:
 		valid1 = TSPSolution(route1)
 		valid2 = TSPSolution(route2)
 
-		if valid1.cost() < math.inf and valid1.cost() < city_cost1:
+		if valid1.cost < math.inf and valid1.cost < city_cost1:
 			result_city1 = new_city1
-			city1.insert(0, valid1.cost())
+			city1.insert(0, valid1.cost)
 		else:
 			# might need deep copy
 			result_city1 = city1
 			city1.insert(0, city_cost1)
 
-		if valid2.cost() < math.inf and valid2.cost() < city_cost2:
+		if valid2.cost < math.inf and valid2.cost < city_cost2:
 			result_city2 = new_city2
-			city1.insert(0, valid2.cost())
+			city1.insert(0, valid2.cost)
 		else:
 			# might need deep copy
 			result_city2 = city2
@@ -231,10 +231,31 @@ class TSPSolver:
 
 
 		#take the best cost of all paths
-		random_paths=[random_num1, random_num2, random_num3, random_num4]
+		random_paths=[initial_pop[random_num1][0], initial_pop[random_num2][0], initial_pop[random_num3][0], initial_pop[random_num4][0]]
 		random_paths.sort()
 
-		return random_paths[-1], random_paths[-2]
+		return1 = None
+		return2 = None
+
+		if initial_pop[random_num1][0] == random_paths[-1]:
+			return1 = initial_pop[random_num1]
+		if initial_pop[random_num2][0] == random_paths[-1]:
+			return1 = initial_pop[random_num2]
+		if initial_pop[random_num3][0] == random_paths[-1]:
+			return1 = initial_pop[random_num3]
+		if initial_pop[random_num4][0] == random_paths[-1]:
+			return1 = initial_pop[random_num4]
+		if initial_pop[random_num1][0] == random_paths[-2]:
+			return2 = initial_pop[random_num1]
+		if initial_pop[random_num2][0] == random_paths[-2]:
+			return2 = initial_pop[random_num2]
+		if initial_pop[random_num3][0] == random_paths[-2]:
+			return2 = initial_pop[random_num3]
+		if initial_pop[random_num4][0] == random_paths[-2]:
+			return2 = initial_pop[random_num4]
+
+
+		return return1, return2
 
 
 	def mutate(self, cities_length, city_path, cities):
@@ -256,7 +277,7 @@ class TSPSolver:
 		while i < cities_length:
 			route.append(cities[i])
 		valid1 = TSPSolution(route)
-		if valid1.cost() < math.inf and valid1.cost() < city_path[0]:
+		if valid1.cost < math.inf and valid1.cost < city_path[0]:
 			return path_copy
 		else:
 			return city_path
@@ -267,17 +288,28 @@ class TSPSolver:
 
 
 	def fancy( self,time_allowance=60.0 ):
-		populationSet = self.initializePopulation()
-
-	def initializePopulation(self):
-		numPathsToGenerate = (len(self._scenario.getCities()))**2
-		populationSet = [] # initialize an empty array
-		populationSet = self.greedyPathGenerator(populationSet)
-		return self.randomPathGenerator(populationSet, numPathsToGenerate)
-
-	def greedyPathGenerator(self, populationSet):
 		cities = self._scenario.getCities()
 		ncities = len(cities)
+		populationSet = self.initializePopulation(cities, ncities)
+		# while not done
+		# while
+		parents = self.select(populationSet)
+		children = self.crossover(ncities,parents[0], parents[1], cities)
+		child1 = self.mutate(ncities,children[0],cities)
+		child2 = self.mutate(ncities,children[1], cities)
+		result = self.fitness(child1, child2)
+		return result[1:]
+
+
+
+	def initializePopulation(self,cities, ncities):
+		numPathsToGenerate = (len(self._scenario.getCities()))**2
+		populationSet = [] # initialize an empty array
+		populationSet = self.greedyPathGenerator(populationSet, cities, ncities)
+		return self.randomPathGenerator(populationSet, numPathsToGenerate, cities, ncities)
+
+
+	def greedyPathGenerator(self, populationSet, cities, ncities):
 		# This loop adds n to the time complexity of the interior
 		# complexity, where n is ncities
 		for city in cities:
@@ -319,9 +351,7 @@ class TSPSolver:
 
 		return populationSet
 
-	def randomPathGenerator(self, populationSet, desiredNumPaths):
-		cities = self._scenario.getCities()
-		ncities = len(cities)
+	def randomPathGenerator(self, populationSet, desiredNumPaths, cities, ncities):
 
 		while len(populationSet) < desiredNumPaths:
 			# create a random permutation
