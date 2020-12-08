@@ -18,6 +18,7 @@ import heapq
 import itertools
 import traceback
 from copy import copy, deepcopy
+import random
 
 
 class TSPSolver:
@@ -206,29 +207,46 @@ class TSPSolver:
 		return [result_city1, result_city2]
 
 
-	''' <summary>
-		This is the entry point for the branch-and-bound algorithm that you will implement
-		</summary>
-		<returns>results dictionary for GUI that contains three ints: cost of best solution, 
-		time spent to find best solution, total number solutions found during search (does
-		not include the initial BSSF), the best solution found, and three more ints: 
-		max queue size, total number of states created, and number of pruned states.</returns> 
-	'''
-		
-	def branchAndBound( self, time_allowance=60.0 ):
-		pass
+	def fitness(self, city1, city2):
+		if city1[0] < city2[0]:
+			return city1
+		else:
+			return city2
+
+	def select(self,initial_pop):
+		random_num1 = random.randint(0, len(initial_pop)-1)
+		random_num2 = random.randint(0,len(initial_pop)-1)
+		random_num3 = random.randint(0,len(initial_pop)-1)
+		random_num4 = random.randint(0,len(initial_pop)-1)
+
+		while random_num1 == random_num2 :
+			random_num2 = random.randint(0, len(initial_pop) - 1)
+
+		while random_num3 == random_num2 or random_num3 == random_num1:
+			random_num3 = random.randint(0, len(initial_pop) - 1)
+
+		while random_num4 == random_num2 or random_num4 == random_num1 or random_num4 == random_num3:
+			random_num4 = random.randint(0, len(initial_pop) - 1)
 
 
+		#take the best cost of all paths
+		random_paths=[random_num1, random_num2, random_num3, random_num4]
+		random_paths.sort()
+
+		return random_paths[-1], random_paths[-2]
+	
+
+	def mutate(self):
 
 	''' <summary>
 		This is the entry point for the algorithm you'll write for your group project.
 		</summary>
-		<returns>results dictionary for GUI that contains three ints: cost of best solution, 
-		time spent to find best solution, total number of solutions found during search, the 
+		<returns>results dictionary for GUI that contains three ints: cost of best solution,
+		time spent to find best solution, total number of solutions found during search, the
 		best solution found.  You may use the other three field however you like.
-		algorithm</returns> 
+		algorithm</returns>
 	'''
-		
+
 	def fancy( self,time_allowance=60.0 ):
 		pass
 		
