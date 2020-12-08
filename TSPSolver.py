@@ -144,7 +144,21 @@ class TSPSolver:
 			print(e)
 			traceback.print_exc()
 			raise (e)
-	
+
+	'''
+			used in the greedy function
+			will find the closest city
+			Will store the list and find the min 
+			will take O(n) time and space
+		'''
+
+	def get_closest_cities(self, city, city_list):
+		cost = {}
+		for city_to_visit in city_list:
+			cost[city_to_visit] = city.costTo(city_to_visit)
+
+		sorted_x = sorted(cost.items(), key=lambda kv: kv[1])
+		return sorted_x
 	
 	
 	''' <summary>
