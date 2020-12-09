@@ -180,31 +180,53 @@ class TSPSolver:
 			else:
 				new_city1.append(city1[i])
 				new_city2.append(city2[i])
-		route1 = []
-		route2 = []
-		for i in range(cities_length):
-			route1.append(cities[new_city1[i]])
-			route2.append(cities[new_city2[i]])
 
+		set1 = set(new_city1)
+		set2 = set(new_city2)
+
+		result1NoDupes = False
+		result2NoDupes = False
+		if len(set1) == cities_length:
+			result1NoDupes = True
+		if len(set2) == cities_length:
+			result2NoDupes = True
+		city1.insert(0,city_cost1)
+		city2.insert(0,city_cost2)
+		route1 = self.create_route(city1,cities)
+		route2 = self.create_route(city2,cities)
+		city1 = city1[1:]
+		city2 = city2[1:]
+
+
+		if result1NoDupes:
+			route1 = []
+			for i in range(cities_length):
+				route1.append(cities[new_city1[i]])
+
+		if result2NoDupes:
+			route2=[]
+			for i in range(cities_length):
+				route2.append(cities[new_city2[i]])
 
 		valid1 = TSPSolution(route1)
 		valid2 = TSPSolution(route2)
 
 		if valid1.cost < math.inf and valid1.cost < city_cost1:
 			result_city1 = new_city1
-			city1.insert(0, valid1.cost)
+			result_city1.insert(0, valid1.cost)
 		else:
 			# might need deep copy
 			result_city1 = city1
-			city1.insert(0, city_cost1)
+			result_city1.insert(0, city_cost1)
 
 		if valid2.cost < math.inf and valid2.cost < city_cost2:
 			result_city2 = new_city2
-			city1.insert(0, valid2.cost)
+			result_city2.insert(0, valid2.cost)
 		else:
 			# might need deep copy
 			result_city2 = city2
-			city2.insert(0, city_cost2)
+			result_city2.insert(0, city_cost2)
+
 		return [result_city1, result_city2]
 
 
@@ -261,7 +283,8 @@ class TSPSolver:
 	def mutate(self, cities_length, city_path, cities):
 		i = 1
 		constant_mutation = 0.05
-		path_copy = copy.deepcopy(city_path)
+		path_copy = deepcopy(city_path)
+		path_copy=path_copy[1:]
 
 		while i < cities_length-1:
 			city_index1 = city_path[i]
@@ -272,38 +295,81 @@ class TSPSolver:
 				path_copy[i] = city_index2
 				path_copy[i+1] = city_index1
 			i += 1
-		i =1
-		route = []
-		while i < cities_length:
-			route.append(cities[i])
-		valid1 = TSPSolution(route)
-		if valid1.cost < math.inf and valid1.cost < city_path[0]:
-			return path_copy
+
+
+		temp = len(set(path_copy))
+		path_copy.insert(0,-10)
+		route = self.create_route(path_copy, cities)
+		path_copy = path_copy[1:]
+		if temp == cities_length:
+			valid1 = TSPSolution(route)
+			if valid1.cost < math.inf and valid1.cost < city_path[0]:
+				path_copy.insert(0,valid1.cost)
+				return path_copy
+			else:
+				return city_path
 		else:
 			return city_path
 
 
 
+	def create_route(self, child, cities):
+		i = 1
+		route = []
+		while i < len(child):
+			route.append(cities[child[i]])
+			i += 1
+		return route
 
 
 
 	def fancy( self,time_allowance=60.0 ):
+		start_time = time.time()
 		cities = self._scenario.getCities()
 		ncities = len(cities)
 		populationSet = self.initializePopulation(cities, ncities)
+		bssf = TSPSolution(self.create_route(populationSet[0],cities))
+		new_bssf = TSPSolution(self.create_route(populationSet[1], cities))
 		# while not done
 		# while
-		parents = self.select(populationSet)
-		children = self.crossover(ncities,parents[0], parents[1], cities)
-		child1 = self.mutate(ncities,children[0],cities)
-		child2 = self.mutate(ncities,children[1], cities)
-		result = self.fitness(child1, child2)
-		return result[1:]
+		count = 0
+
+		while count <= 5:
+			if bssf.cost > new_bssf.cost:
+				bssf = new_bssf
+			populationSet1 = []
+			while len(populationSet1) < len(populationSet):
+				parents = self.select(populationSet)
+				children = self.crossover(ncities,parents[0], parents[1], cities)
+				child1 = self.mutate(ncities,children[0],cities)
+				child2 = self.mutate(ncities,children[1], cities)
+				result_child = self.fitness(child1, child2)
+				populationSet1.append(result_child)
+			populationSet = populationSet1
+			route = self.create_route(result_child, cities)
+			new_bssf = TSPSolution(route)
+			if bssf.cost <= new_bssf.cost:
+				count += 1
+			else:
+				count = 0
+
+
+		end_time = time.time()
+		results = {}
+		results['cost'] = bssf.cost
+		results['time'] = end_time - start_time
+		results['count'] = None
+		results['soln'] = bssf
+		results['max'] = None
+		results['total'] = None
+		results['pruned'] = None
+
+		return results
 
 
 
 	def initializePopulation(self,cities, ncities):
-		numPathsToGenerate = (len(self._scenario.getCities()))**2
+		numPathsToGenerate = math.ceil(math.sqrt(len(self._scenario.getCities())))
 		populationSet = [] # initialize an empty array
 		populationSet = self.greedyPathGenerator(populationSet, cities, ncities)
 		return self.randomPathGenerator(populationSet, numPathsToGenerate, cities, ncities)
